@@ -51,7 +51,7 @@ export default function Home() {
 
     return (
         <div style={styles.container}>
-            <h1 style={styles.title}>Solana NFT Minting DApp</h1>
+            <h1 style={styles.title}>Solana Token-Bounded NFT Minting DApp</h1>
             <WalletConnect onConnect={onConnect} />
             <input 
                 type="number" 
