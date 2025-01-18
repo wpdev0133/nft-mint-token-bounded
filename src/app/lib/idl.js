@@ -16,18 +16,38 @@ export const IDL = {
                     "isSigner": false
                 },
                 {
-                    "name": "nftAccount",
+                    "name": "paymentVault",
                     "isMut": true,
                     "isSigner": false
                 },
                 {
-                    "name": "recipientTokenAccount",
+                    "name": "nftMint",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "nftTokenAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenVault",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "vaultTokenAccount",
                     "isMut": true,
                     "isSigner": false
                 },
                 {
                     "name": "capyTokenMint",
-                    "isMut": false,
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "nftMintState",
+                    "isMut": true,
                     "isSigner": false
                 },
                 {
@@ -39,24 +59,84 @@ export const IDL = {
                     "name": "systemProgram",
                     "isMut": false,
                     "isSigner": false
+                },
+                {
+                    "name": "rent",
+                    "isMut": false,
+                    "isSigner": false
                 }
             ],
             "args": [
                 {
                     "name": "multiplier",
-                    "type": "u64"
+                    "type": "u8"
                 }
             ]
+        },
+        {
+            "name": "unlockTokens",
+            "accounts": [
+                {
+                    "name": "owner",
+                    "isMut": true,
+                    "isSigner": true
+                },
+                {
+                    "name": "tokenVault",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "vaultTokenAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "recipientTokenAccount",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "tokenProgram",
+                    "isMut": false,
+                    "isSigner": false
+                }
+            ],
+            "args": []
         }
     ],
     "accounts": [
         {
-            "name": "nftAccount",
+            "name": "tokenVault",
             "type": {
                 "kind": "struct",
                 "fields": [
                     {
-                        "name": "minted_count",
+                        "name": "nftMint",
+                        "type": "publicKey"
+                    },
+                    {
+                        "name": "tokenAmount",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "isLocked",
+                        "type": "bool"
+                    },
+                    {
+                        "name": "owner",
+                        "type": "publicKey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "mintState",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "totalMinted",
                         "type": "u64"
                     }
                 ]
@@ -68,6 +148,19 @@ export const IDL = {
             "code": 6000,
             "name": "NoMintPass",
             "msg": "User does not have a mint pass and insufficient SOL balance"
+        },
+        {
+            "code": 6001,
+            "name": "UnauthorizedUnlock",
+            "msg": "Only the NFT owner can unlock tokens"
+        },
+        {
+            "code": 6002,
+            "name": "TokensAlreadyUnlocked",
+            "msg": "Tokens are already unlocked"
         }
-    ]
+    ],
+    "metadata": {
+        "address": process.env.NEXT_PUBLIC_PROGRAM_ID
+    }
 };
