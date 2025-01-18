@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 const WalletConnect = ({ onConnect }) => {
     const [walletAddress, setWalletAddress] = useState(null);
     const [connecting, setConnecting] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const [hasPhantom, setHasPhantom] = useState(false);
 
     const checkWalletConnection = async () => {
-        if (window.solana && window.solana.isPhantom) {
+        if (typeof window !== 'undefined' && window.solana && window.solana.isPhantom) {
             try {
                 const response = await window.solana.connect({ onlyIfTrusted: true });
                 const address = response.publicKey.toString();
@@ -47,24 +49,35 @@ const WalletConnect = ({ onConnect }) => {
     };
 
     useEffect(() => {
+        setMounted(true);
+        if (typeof window !== 'undefined') {
+            setHasPhantom(window.solana && window.solana.isPhantom);
+        }
+        
         checkWalletConnection();
 
-        window.solana?.on('connect', (publicKey) => {
-            setWalletAddress(publicKey.toString());
-            onConnect(publicKey.toString());
-        });
+        if (typeof window !== 'undefined' && window.solana) {
+            window.solana.on('connect', (publicKey) => {
+                setWalletAddress(publicKey.toString());
+                onConnect(publicKey.toString());
+            });
 
-        window.solana?.on('disconnect', () => {
-            setWalletAddress(null);
-            onConnect(null);
-        });
+            window.solana.on('disconnect', () => {
+                setWalletAddress(null);
+                onConnect(null);
+            });
 
-        return () => {
-            window.solana?.disconnect();
-        };
+            return () => {
+                window.solana.disconnect();
+            };
+        }
     }, []);
 
-    if (!window.solana) {
+    if (!mounted) {
+        return null; // Return null on server-side
+    }
+
+    if (!hasPhantom) {
         return (
             <button
                 onClick={() => window.open('https://phantom.app/', '_blank')}
