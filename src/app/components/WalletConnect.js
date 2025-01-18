@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 const WalletConnect = ({ onConnect }) => {
     const [walletAddress, setWalletAddress] = useState(null);
     const [connecting, setConnecting] = useState(false);
+    const [disconnecting, setDisconnecting] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [hasPhantom, setHasPhantom] = useState(false);
 
@@ -41,10 +42,26 @@ const WalletConnect = ({ onConnect }) => {
     };
 
     const disconnectWallet = async () => {
-        if (window.solana) {
+        if (!window.solana) return;
+
+        setDisconnecting(true);
+        try {
             await window.solana.disconnect();
             setWalletAddress(null);
             onConnect(null);
+            
+            // Clear any cached connection
+            if (window.localStorage) {
+                Object.keys(window.localStorage).forEach(key => {
+                    if (key.startsWith('phantom') || key.startsWith('solana')) {
+                        window.localStorage.removeItem(key);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error disconnecting wallet:', error);
+        } finally {
+            setDisconnecting(false);
         }
     };
 
@@ -65,6 +82,16 @@ const WalletConnect = ({ onConnect }) => {
             window.solana.on('disconnect', () => {
                 setWalletAddress(null);
                 onConnect(null);
+            });
+
+            window.solana.on('accountChanged', (publicKey) => {
+                if (publicKey) {
+                    setWalletAddress(publicKey.toString());
+                    onConnect(publicKey.toString());
+                } else {
+                    setWalletAddress(null);
+                    onConnect(null);
+                }
             });
 
             return () => {
@@ -99,9 +126,12 @@ const WalletConnect = ({ onConnect }) => {
                         </code>
                         <button
                             onClick={disconnectWallet}
-                            className="text-sm text-slate-400 hover:text-red-400 transition-colors"
+                            disabled={disconnecting}
+                            className={`text-sm text-slate-400 hover:text-red-400 transition-colors ${
+                                disconnecting ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                         >
-                            Disconnect
+                            {disconnecting ? 'Disconnecting...' : 'Disconnect'}
                         </button>
                     </div>
                 </div>
